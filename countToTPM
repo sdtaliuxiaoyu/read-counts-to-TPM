@@ -1,0 +1,21 @@
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+library("GenomicFeatures")
+##website: Index of /pub/release-108/gtf/homo_sapiens (ensembl.org)
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
+txdb <- makeTxDbFromGFF("genome.gff3",format="gff3")
+##get the exon position
+exons_gene <- exonsBy(txdb, by = "gene")
+## remove the exon and calculate the exon length
+exons_gene_len <- lapply(exons_gene,function(x){sum(width(reduce(x)))})
+##transfer into dataframe
+# exons_gene_len_df <- as.data.frame(t(as.data.frame(exons_gene_len)))
+# exons_gene_len_df$geneid <- gsub("X", "", rownames(exons_gene_len_df))
+gene_length <- sapply(exons_gene_len,function(x){x})
+id_length <- as.data.frame(gene_length)
+
+# count to TPM
+countToTpm <- function(counts, effLen){
+rate <- log(counts) - log(effLen)
+denom <- log(sum(exp(rate)))
+exp(rate - denom + log(1e6))
+}
